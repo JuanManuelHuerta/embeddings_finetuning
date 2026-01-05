@@ -18,6 +18,8 @@ import faiss
 from sklearn.metrics.pairwise import cosine_similarity
 
 # Visualization libraries
+import matplotlib
+matplotlib.use("kitcat")
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
 import seaborn as sns
@@ -57,7 +59,7 @@ logging.basicConfig(
 @dataclass
 class Config:
     tickers: List[str] = field(
-        default_factory=lambda: ["AAPL", "GOOGL", "MSFT", "AMZN", "META"]
+        default_factory=lambda: ["AAPL", "GOOGL", "MSFT", "AMZN", "META","ORCL", "NVDA","IBM", "PLTR","MSTR"]
     )
     embedding_model: str = "all-MiniLM-L6-v2"
     top_k: int = 1
@@ -96,9 +98,7 @@ class FinancialDataLoader:
             self.config.tickers, desc="Loading quarterly balance sheets"
         ):
             try:
-                print(f"IM HERE {ticker}")
                 stock = yf.Ticker(ticker)
-                print(f"STOCK {stock}")
                 # Using the quarterly balance sheet property from yfinance
                 bs = stock.quarterly_balance_sheet
                 print(f"BS {bs}")
@@ -284,7 +284,7 @@ class FinancialRAG:
 @dataclass
 class TrainConfig:
     tickers: List[str] = field(
-        default_factory=lambda: ["AAPL", "GOOGL", "MSFT", "AMZN", "META"]
+        default_factory=lambda: ["AAPL", "GOOGL", "MSFT", "AMZN", "META","ORCL", "NVDA","IBM", "PLTR","MSTR"]
     )
     epochs: int = 1000
     batch_size: int = 16
@@ -294,6 +294,8 @@ class TrainConfig:
     optimizer_class: Any = torch.optim.AdamW
     model_name: str = "sentence-transformers/all-MiniLM-L6-v2"
     model_output_dir: str = "fine-tuned-embedding-model"
+
+
 
 
 def generate_questions(context: str) -> str:
@@ -337,6 +339,9 @@ def generate_questions(context: str) -> str:
 
     # remove any stray chain-of-thought markers.
     question = re.sub(r"<think>.*?</think>", "", question, flags=re.DOTALL).strip()
+
+    print(f"QUESTION: {question}")
+
     return question
 
 
@@ -564,6 +569,7 @@ class EmbeddingEvaluator:
         plt.title("Embedding Performance Improvement")
         plt.xlabel("Improvement Score")
         plt.tight_layout()
+        plt.show()
         plt.savefig("embedding_comparison.png")
         return self.results
 # ---------------------------
@@ -583,9 +589,7 @@ quarterly_balance_sheets["AAPL"].head()
 train_config = TrainConfig()
 
 
-print("IM HERE 1")
 trainer = ModelTrainer(train_config)
-print("IM HERE 2")
 
 fine_tuned_model = trainer.train(quarterly_balance_sheets)
 
